@@ -1,0 +1,7 @@
+# requirements/dev.txt
+-r prod.txt
+pytest
+pytest-cov
+black
+flake8
+mypy
