@@ -1,6 +1,7 @@
 # requirements/dev.txt
 -r prod.txt
 pytest
+pytest-xdist
 pytest-cov
 black
 flake8
