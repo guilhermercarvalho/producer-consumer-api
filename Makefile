@@ -1,17 +1,31 @@
+# Instala as dependências necessárias para o desenvolvimento
 install:
-    pip install -r requirements/dev.txt
+	pip install -r requirements/dev.txt
 
+# Executa os testes unitários
 test:
-    pytest tests/ -v
+	pytest tests/ -v
 
+# Verifica a qualidade do código
 lint:
-    flake8 src/
-    black --check src/ tests/
-    mypy src/
+	# Verifica a sintaxe e a formatação do código
+	flake8 src/
+	# Verifica a formatação do código
+	black --check src/ tests/
+	# Verifica a tipagem do código
+	mypy src/
 
+# Formata o código
 format:
-    black src/ tests/
-    isort src/ tests/
+	# Formata o código para seguir as convenções de estilo
+	black src/ tests/
+	# Organiza as importações
+	isort src/ tests/
 
+# Gera um relatório de cobertura de código
 coverage:
-    pytest --cov=producer-consumer-sync --cov-report=html
+	# Executa os testes e gera um relatório de cobertura
+	pytest --cov=producer-consumer-sync --cov-report=html
+
+all: install test lint format coverage
+
