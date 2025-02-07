@@ -3,7 +3,6 @@ import threading
 import time
 import random
 
-
 class Buffer:
     def __init__(self, size):
         self.size = size
