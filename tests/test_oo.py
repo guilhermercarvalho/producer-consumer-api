@@ -1,7 +1,7 @@
+import pytest
 import threading
 import time
 import random
-import unittest
 
 
 class Buffer:
@@ -73,65 +73,62 @@ class Consumer(threading.Thread):
             self.buffer.remove_with_semaphore()
             time.sleep(random.uniform(*self.delay_range))
 
-# Testes Unitários
+
+@pytest.fixture
+def buffer():
+    return Buffer(5)
 
 
-class TestBuffer(unittest.TestCase):
-    def setUp(self):
-        self.buffer_size = 5
-        self.max_items = 10
+def test_race_condition(buffer):
+    threads = []
 
-    def test_race_condition(self):
-        buffer = Buffer(self.buffer_size)
-        threads = []
+    for _ in range(2):
+        threads.append(threading.Thread(
+            target=lambda: [buffer.insert_without_semaphore(i) for i in range(3)]
+        ))
+        threads.append(threading.Thread(
+            target=lambda: [buffer.remove_without_semaphore() for _ in range(3)]
+        ))
 
-        # Cria produtores e consumidores sem semáforos
-        for _ in range(2):
-            threads.append(threading.Thread(
-                target=lambda: [buffer.insert_without_semaphore(i) for i in range(3)]
-            ))
-            threads.append(threading.Thread(
-                target=lambda: [buffer.remove_without_semaphore() for _ in range(3)]
-            ))
+    for t in threads:
+        t.start()
+    for t in threads:
+        t.join()
 
-        for t in threads:
-            t.start()
-        for t in threads:
-            t.join()
-
-        self.assertGreater(buffer.insert_skipped + buffer.remove_missed, 0)
-
-    def test_with_semaphores(self):
-        buffer = Buffer(self.buffer_size)
-        producer = Producer(buffer, self.max_items)
-        consumer = Consumer(buffer, self.max_items)
-
-        producer.start()
-        consumer.start()
-
-        producer.join()
-        consumer.join()
-
-        self.assertEqual(buffer.counter, 0)
-        self.assertEqual(buffer.insert_skipped, 0)
-        self.assertEqual(buffer.remove_missed, 0)
-
-    def test_delayed_operations(self):
-        buffer = Buffer(2)
-        producer = Producer(buffer, 5, delay_range=(0.5, 1.0))
-        consumer = Consumer(buffer, 5, delay_range=(0.1, 0.3))
-
-        producer.start()
-        consumer.start()
-
-        producer.join()
-        consumer.join()
-
-        self.assertLessEqual(buffer.counter, buffer.size)
+    assert buffer.insert_skipped + buffer.remove_missed > 0
 
 
-if __name__ == "__main__":
-    # Exemplo de uso
+def test_with_semaphores(buffer):
+    producer = Producer(buffer, 10)
+    consumer = Consumer(buffer, 10)
+
+    producer.start()
+    consumer.start()
+
+    producer.join()
+    consumer.join()
+
+    assert buffer.counter == 0
+    assert buffer.insert_skipped == 0
+    assert buffer.remove_missed == 0
+
+
+def test_delayed_operations():
+    buffer = Buffer(2)
+    producer = Producer(buffer, 5, delay_range=(0.5, 1.0))
+    consumer = Consumer(buffer, 5, delay_range=(0.1, 0.3))
+
+    producer.start()
+    consumer.start()
+
+    producer.join()
+    consumer.join()
+
+    assert buffer.counter <= buffer.size
+
+
+# Exemplo de uso
+def test_example_usage():
     buffer = Buffer(10)
     producer = Producer(buffer, 20)
     consumer = Consumer(buffer, 20)
@@ -146,6 +143,3 @@ if __name__ == "__main__":
     print(f"Itens no buffer: {buffer.counter}")
     print(f"Produções perdidas: {buffer.insert_skipped}")
     print(f"Consumos falhos: {buffer.remove_missed}")
-
-    # Executar testes
-    unittest.main(argv=[''], exit=False)
