@@ -6,6 +6,11 @@
 
 - [ ] o que é um problema de sincronização?
 
+## Branches
+
+- `main`: principal
+- `feat/xpto`: adiciona funcionalidade
+
 # Stack
 
 - [x] como funciona o `requirements` do `pip`?
