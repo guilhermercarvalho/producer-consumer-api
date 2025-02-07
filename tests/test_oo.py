@@ -79,22 +79,25 @@ def buffer():
 
 
 def test_race_condition(buffer):
-    threads = []
+    buffer.size = 2
 
-    for _ in range(2):
-        threads.append(threading.Thread(
-            target=lambda: [buffer.insert_without_semaphore(i) for i in range(3)]
-        ))
-        threads.append(threading.Thread(
-            target=lambda: [buffer.remove_without_semaphore() for _ in range(3)]
-        ))
+    for _ in range(100):
+        threads = []
 
-    for t in threads:
-        t.start()
-    for t in threads:
-        t.join()
+        for _ in range(2):
+            threads.append(threading.Thread(
+                target=lambda: [buffer.insert_without_semaphore(i) for i in range(3)]
+            ))
+            threads.append(threading.Thread(
+                target=lambda: [buffer.remove_without_semaphore() for _ in range(3)]
+            ))
 
-    assert buffer.insert_skipped + buffer.remove_missed > 0
+        for t in threads:
+            t.start()
+        for t in threads:
+            t.join()
+
+        assert buffer.insert_skipped + buffer.remove_missed > 0
 
 
 def test_with_semaphores(buffer):
