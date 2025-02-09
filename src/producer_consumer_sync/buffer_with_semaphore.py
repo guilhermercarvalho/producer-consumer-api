@@ -6,18 +6,18 @@ class BufferWithSemaphore(BufferLocal):
         super().__init__(size)
 
         self._mutex = Lock()
-        self.empty = Semaphore(self.size)
-        self.full = Semaphore(0)
+        self._empty = Semaphore(self.size)
+        self._full = Semaphore(0)
 
     def insert(self, data):
-        self.empty.acquire()
+        self._empty.acquire()
         with self._mutex:
             super().insert(data)
-        self.full.release()
+        self._full.release()
 
     def remove(self):
-        self.full.acquire()
+        self._full.acquire()
         with self._mutex:
             data = super().remove()
-        self.empty.release()
+        self._empty.release()
         return data
