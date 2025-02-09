@@ -10,9 +10,15 @@ install:
 test:
 	pytest tests/ -v
 
-# Executa testes em modo watch
-watch:
+# Executa testes em modo watch para prática de TDD
+tdd:
+	ptw -v
+
+tdd-fail:
 	ptw -v -- --last-failed
+
+tdd-debug:
+	ptw -v --pdb
 
 # Verifica a qualidade do código
 lint:
