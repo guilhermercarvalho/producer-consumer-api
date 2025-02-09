@@ -1,7 +1,7 @@
+import random
 import threading
 import time
-import random
-from typing import Callable, Any
+from typing import Any, Callable
 
 # Configurações
 BUFFER_SIZE = 10
@@ -144,7 +144,7 @@ def create_thread(
     target: Callable,
     action: Callable,
     buffer_action: Callable,
-    delay_range: tuple[float, float] = None,
+    delay_range: tuple[float, float] = (0, 1),
 ) -> threading.Thread:
     if delay_range:
         return threading.Thread(
