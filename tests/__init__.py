@@ -33,7 +33,3 @@ RedisBuffer
 """
 
 
-class Buffer:
-    pass
-
-
