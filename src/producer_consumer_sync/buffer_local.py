@@ -1,62 +1,63 @@
 from .producer_consumer import Buffer
+from multiprocessing import Manager
 
 class BufferLocal(Buffer):
     def __init__(self, size):
-        super().__setattr__("_size", size)
-        super().__setattr__("_slots", [None] * size)
-        super().__setattr__("_pointer", 0)
+        super().__init__(size)
 
-        super().__setattr__("_invalid_access", 0)
-        super().__setattr__("_skipped_insert", 0)
+        self._invalid_access = Manager().Value('i', 0)
+        self._skipped_insert = Manager().Value('i', 0)
 
     def insert(self, data):
-        hasAnyEmptySlot = self.pointer < self.size
+        hasAnyEmptySlot = self._pointer.value < self._size
 
         if hasAnyEmptySlot:
-            self.slots[self.pointer] = data
-            self._pointer += 1
+            self._slots[self._pointer.value] = data
+            self._pointer.value += 1
+            self.increment_produced()
         else:
-            self._skipped_insert += 1
+            self._skipped_insert.value += 1
 
     def remove(self):
-        hasAnySlotFulfilled = self.pointer > 0
+        hasAnySlotFulfilled = self._pointer.value > 0
 
         if hasAnySlotFulfilled:
-            data = self.slots[self.pointer - 1]
-            self._pointer -= 1
+            data = self._slots[self._pointer.value - 1]
+            self._pointer.value -= 1
+            self.increment_consumed()
             return data
         else:
-            self._invalid_access += 1
+            self._invalid_access.value += 1
             return -1
 
-    @property
-    def size(self):
-        return self._size
+    # @property
+    # def size(self):
+    #     return self._size
 
-    @property
-    def slots(self):
-        return self._slots
+    # @property
+    # def slots(self):
+    #     return self._slots
 
-    @property
-    def pointer(self):
-        return self._pointer
+    # @property
+    # def pointer(self):
+    #     return self._pointer
 
-    @property
-    def invalid_access(self):
-        return self._invalid_access
+    # @property
+    # def invalid_access(self):
+    #     return self._invalid_access.value
 
-    @property
-    def skipped_insert(self):
-        return self._skipped_insert
+    # @property
+    # def skipped_insert(self):
+    #     return self._skipped_insert
 
-    def __setattr__(self, name, value):
-        static_values = [
-            "_size",
-            "_slots",
-            # "_pointer",
-            # "_invalid_access",
-            # "_skipped_insert"
-        ]
-        if name in static_values:
-            raise AttributeError(f"Attribute '{name}' cannot be modified!")
-        super().__setattr__(name, value)
+    # def __setattr__(self, name, value):
+    #     static_values = [
+    #         "_size",
+    #         "_slots",
+    #         # "_pointer",
+    #         # "_invalid_access",
+    #         # "_skipped_insert"
+    #     ]
+    #     if name in static_values:
+    #         raise AttributeError(f"Attribute '{name}' cannot be modified!")
+    #     super().__setattr__(name, value)

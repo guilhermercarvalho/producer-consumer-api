@@ -1,5 +1,5 @@
 from .buffer_local import BufferLocal
-from threading import Lock, Semaphore
+from multiprocessing import Lock, Semaphore
 
 class BufferWithSemaphore(BufferLocal):
     def __init__(self, size, timeout = 0):
@@ -8,7 +8,7 @@ class BufferWithSemaphore(BufferLocal):
         self._timeout = timeout if timeout > 0 else None
 
         self._mutex = Lock()
-        self._empty = Semaphore(self.size)
+        self._empty = Semaphore(self._size)
         self._full = Semaphore(0)
 
     def insert(self, data):
