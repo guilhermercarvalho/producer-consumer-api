@@ -1,7 +1,6 @@
-from src.producer_consumer_sync.buffer import Buffer
+from .producer_consumer import Buffer
 
-
-class BufferLocal():
+class BufferLocal(Buffer):
     def __init__(self, size):
         super().__setattr__("_size", size)
         super().__setattr__("_slots", [None] * size)
