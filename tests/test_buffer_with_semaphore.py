@@ -10,6 +10,11 @@ def create_buffer(request):
     size = getattr(request, "param", 10)
     return BufferWithSemaphore(size)
 
+@pytest.fixture
+def create_buffer_with_timeout(request):
+    # Obtém o valor do parâmetro "size" ou usa o valor padrão 10
+    size = getattr(request, "param", 10)
+    return BufferWithSemaphore(size, 1)
 
 @pytest.fixture
 def buffer_with_slot_fulfilled(request, create_buffer):
@@ -62,9 +67,9 @@ class TestBufferWithSemaphore:
         assert buffer.slots[:len(range_values)] == range_values
         assert buffer.pointer == value
 
-    @pytest.mark.parametrize("create_buffer", [1], indirect=True)
-    def test_insert_above_maximum_capacity(self, create_buffer):
-        buffer = create_buffer
+    @pytest.mark.parametrize("create_buffer_with_timeout", [1], indirect=True)
+    def test_insert_above_maximum_capacity(self, create_buffer_with_timeout):
+        buffer = create_buffer_with_timeout
         buffer.insert(1)
 
         def insert():
@@ -74,11 +79,12 @@ class TestBufferWithSemaphore:
         thread.start()
 
         import time
-        time.sleep(0.1)
+        time.sleep(2)
 
-        assert thread.is_alive()
+        assert not thread.is_alive()
         assert buffer.pointer == 1
-        assert buffer.skipped_insert == 0
+        assert buffer.skipped_insert == 1
+
 
     def test_remove(self, buffer_with_slot_fulfilled):
         buffer = buffer_with_slot_fulfilled
@@ -86,8 +92,8 @@ class TestBufferWithSemaphore:
         assert buffer.remove() == 1
         assert buffer.pointer == 0
 
-    def test_remove_when_empty(self, create_buffer):
-        buffer = create_buffer
+    def test_remove_when_empty(self, create_buffer_with_timeout):
+        buffer = create_buffer_with_timeout
 
         def remove():
             buffer.remove()
@@ -97,8 +103,9 @@ class TestBufferWithSemaphore:
         thread.start()
 
         import time
-        time.sleep(0.1)
+        time.sleep(2)
 
-        assert thread.is_alive()
+        assert not thread.is_alive()
         assert buffer.pointer == 0
-        assert buffer.invalid_access == 0
+        assert buffer.invalid_access == 1
+
