@@ -1,2 +1,2 @@
 # requirements/prod.txt
-numpy  # Exemplo de dependência principal
+flask

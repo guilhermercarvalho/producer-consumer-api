@@ -4,6 +4,7 @@ pytest
 pytest-xdist
 pytest-cov
 pytest-watch
+pytest-flask
 black
 flake8
 mypy
