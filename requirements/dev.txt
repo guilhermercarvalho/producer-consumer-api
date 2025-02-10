@@ -3,7 +3,6 @@
 pytest
 pytest-xdist
 pytest-cov
-pytest-sugar
 pytest-watch
 black
 flake8
