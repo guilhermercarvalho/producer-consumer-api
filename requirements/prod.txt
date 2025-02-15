@@ -1,2 +1,4 @@
 # requirements/prod.txt
-numpy  # Exemplo de dependência principal
+flask
+flask_cors
+redis
