@@ -9,11 +9,13 @@ def create_buffer(request) -> BufferLocal:
     size = getattr(request, "param", 10)
     return BufferLocal(size)
 
+
 @pytest.fixture
 def buffer_with_slot_fulfilled(request, create_buffer):
     data = getattr(request, "param", 1)
     create_buffer.insert(data)
     return create_buffer
+
 
 class TestBufferLocal:
     @pytest.mark.parametrize("create_buffer", [1, 5, 10], indirect=True)
@@ -61,7 +63,7 @@ class TestBufferLocal:
         for i in range_values:
             buffer.insert(i)
 
-        assert buffer._slots[:len(range_values)] == range_values
+        assert buffer._slots[: len(range_values)] == range_values
         assert buffer._pointer.value == value
         assert buffer._produced.value == value
 

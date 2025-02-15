@@ -1,5 +1,6 @@
-import pytest
 from threading import Thread
+
+import pytest
 
 from src.producer_consumer_sync.buffer_with_semaphore import BufferWithSemaphore
 
@@ -70,7 +71,7 @@ class TestBufferWithSemaphore:
         for i in range_values:
             buffer.insert(i)
 
-        assert buffer._slots[:len(range_values)] == range_values
+        assert buffer._slots[: len(range_values)] == range_values
         assert buffer._pointer.value == value
         assert buffer._produced.value == value
 
@@ -86,6 +87,7 @@ class TestBufferWithSemaphore:
         thread.start()
 
         import time
+
         time.sleep(2)
 
         assert not thread.is_alive()
@@ -111,6 +113,7 @@ class TestBufferWithSemaphore:
         thread.start()
 
         import time
+
         time.sleep(2)
 
         assert not thread.is_alive()

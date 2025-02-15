@@ -1,8 +1,10 @@
-from .buffer_local import BufferLocal
 from multiprocessing import Lock, Semaphore
 
+from .buffer_local import BufferLocal
+
+
 class BufferWithSemaphore(BufferLocal):
-    def __init__(self, size, timeout = 0):
+    def __init__(self, size, timeout=0):
         super().__init__(size)
 
         self._timeout = timeout if timeout > 0 else None

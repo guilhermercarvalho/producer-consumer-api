@@ -1,8 +1,10 @@
-import pytest
-from src.producer_consumer_sync.producer_consumer import Producer, Consumer
-from src.producer_consumer_sync.buffer_with_semaphore import BufferWithSemaphore
-from src.producer_consumer_sync.buffer_local import BufferLocal
 import random
+
+import pytest
+
+from src.producer_consumer_sync.buffer_local import BufferLocal
+from src.producer_consumer_sync.buffer_with_semaphore import BufferWithSemaphore
+from src.producer_consumer_sync.producer_consumer import Consumer, Producer
 
 
 @pytest.fixture
@@ -18,20 +20,26 @@ def create_buffer_with_semaphore(request):
 
 
 class TestProducer:
-    @pytest.mark.parametrize("buffer_fixture", [
-        "create_buffer_local",
-        "create_buffer_with_semaphore",
-    ])
+    @pytest.mark.parametrize(
+        "buffer_fixture",
+        [
+            "create_buffer_local",
+            "create_buffer_with_semaphore",
+        ],
+    )
     def test_run(self, request, buffer_fixture):
         buffer = request.getfixturevalue(buffer_fixture)
         producer = Producer(buffer, lambda: random.randint(1, 100))
         producer.run()
         assert buffer.pointer > 0
 
-    @pytest.mark.parametrize("buffer_fixture", [
-        "create_buffer_local",
-        "create_buffer_with_semaphore",
-    ])
+    @pytest.mark.parametrize(
+        "buffer_fixture",
+        [
+            "create_buffer_local",
+            "create_buffer_with_semaphore",
+        ],
+    )
     def test_multiple_runs(self, request, buffer_fixture):
         buffer = request.getfixturevalue(buffer_fixture)
         producer = Producer(buffer, lambda: random.randint(1, 100))
@@ -43,10 +51,13 @@ class TestProducer:
 
 
 class TestConsumer:
-    @pytest.mark.parametrize("buffer_fixture", [
-        "create_buffer_local",
-        "create_buffer_with_semaphore",
-    ])
+    @pytest.mark.parametrize(
+        "buffer_fixture",
+        [
+            "create_buffer_local",
+            "create_buffer_with_semaphore",
+        ],
+    )
     def test_run(self, request, buffer_fixture):
         buffer = request.getfixturevalue(buffer_fixture)
         buffer.insert(random.randint(1, 100))
@@ -54,10 +65,13 @@ class TestConsumer:
         consumer.run()
         assert buffer.pointer == 0
 
-    @pytest.mark.parametrize("buffer_fixture", [
-        "create_buffer_local",
-        "create_buffer_with_semaphore",
-    ])
+    @pytest.mark.parametrize(
+        "buffer_fixture",
+        [
+            "create_buffer_local",
+            "create_buffer_with_semaphore",
+        ],
+    )
     def test_multiple_runs(self, request, buffer_fixture):
         buffer = request.getfixturevalue(buffer_fixture)
         consumer = Consumer(buffer, lambda x: print(x))
@@ -76,6 +90,7 @@ class TestProducerAndConsumerConcurrency:
         consumer = Consumer(buffer, lambda x: print(x))
 
         import threading
+
         producer_thread = threading.Thread(target=producer.run)
         consumer_thread = threading.Thread(target=consumer.run)
 
@@ -85,4 +100,4 @@ class TestProducerAndConsumerConcurrency:
         producer_thread.join()
         consumer_thread.join()
 
-        assert buffer.pointer == 0
+        assert buffer._pointer.value == 0

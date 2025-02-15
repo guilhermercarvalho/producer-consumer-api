@@ -1,12 +1,14 @@
-from .producer_consumer import Buffer
 from multiprocessing import Manager
+
+from .producer_consumer import Buffer
+
 
 class BufferLocal(Buffer):
     def __init__(self, size):
         super().__init__(size)
 
-        self._invalid_access = Manager().Value('i', 0)
-        self._skipped_insert = Manager().Value('i', 0)
+        self._invalid_access = Manager().Value("i", 0)
+        self._skipped_insert = Manager().Value("i", 0)
 
     def insert(self, data):
         hasAnyEmptySlot = self._pointer.value < self._size
