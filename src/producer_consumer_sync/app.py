@@ -1,83 +1,59 @@
 from flask import Flask, request, jsonify
-from multiprocessing import Process, Manager
-from random import uniform
-from .producer_consumer import Producer, Consumer, Buffer
-from .buffer_with_semaphore import BufferWithSemaphore as BufferLocal
+from flask_cors import CORS
+from .all import ProcessManager
 
 
-class App(Flask):
+class App:
     def __init__(self):
-        super().__init__(__name__)
-        self.manager = Manager()
-        self.processes = self.manager.dict()
+        self.app = Flask(__name__)
+        CORS(self.app, origins=["http://localhost:5173"])
+        self.process_manager = ProcessManager()
+        self.setup_routes()
 
-    def produce(self):
-        return uniform(0, 100)
-
-    def consume(self, data):
-        print(f"Consumido: {data}")
+    def setup_routes(self):
+        self.app.add_url_rule('/start', 'start', self.start, methods=['POST', 'OPTIONS'])
+        self.app.add_url_rule('/status/<process_id>', 'get_status',
+                              self.get_status, methods=['GET', 'OPTIONS'])
+        self.app.add_url_rule('/stop/<process_id>', 'stop', self.stop, methods=['POST', 'OPTIONS'])
 
     def start(self):
-        def run_producer_consumer():
-            buffer: Buffer = BufferLocal(10)
-            producer = Producer(buffer, self.produce, (3, 5))
-            consumer = Consumer(buffer, self.consume, (3, 5))
-            p = Process(target=producer.run)
-            c = Process(target=consumer.run)
-            p.start()
-            c.start()
-            p.join()
-            c.join()
+        if request.method == 'OPTIONS':
+            return jsonify({}), 200, {
+                'Access-Control-Allow-Origin': '*',
+                'Access-Control-Allow-Methods': 'POST, OPTIONS',
+                'Access-Control-Allow-Headers': 'Content-Type, Authorization'
+            }
+        buffer_type = request.json.get('buffer_type', 'queue')
+        process_id = self.process_manager.start_process(buffer_type)
+        return jsonify({'process_id': process_id})
 
-        p = Process(target=run_producer_consumer)
-        p.start()
-        self.processes[len(self.processes)] = p.pid
-        return jsonify({'id': len(self.processes) - 1})
+    def get_status(self, process_id):
+        if request.method == 'OPTIONS':
+            return jsonify({}), 200, {
+                'Access-Control-Allow-Origin': '*',
+                'Access-Control-Allow-Methods': 'POST, OPTIONS',
+                'Access-Control-Allow-Headers': 'Content-Type, Authorization'
+            }
+        status = self.process_manager.get_process_status(process_id)
+        if status:
+            return jsonify(status), 200
+        return jsonify({"error": "Processo não encontrado"}), 404
 
-    def stop(self, id):
-        if id in self.processes:
-            p_pid = self.processes[id]
-
-            import os
-            os.kill(p_pid, 9)
-
-            del self.processes[id]
-            return jsonify({'message': 'Processo parado'})
-        else:
-            return jsonify({'message': 'Processo não encontrado'}), 404
-
-    def stats(self, id):
-        if id in self.processes:
-            _, _, buffer= self.processes[id]
-            buffer_stats= buffer.stats()
-            return jsonify({
-                'taxa de produção': buffer_stats['production']['rate'],
-                'produzido': buffer_stats['production']['quantity'],
-                'taxa de consumo': buffer_stats['consumption']['rate'],
-                'consumido': buffer_stats['consumption']['quantity'],
-                'buffer': len(buffer.slots)
-            })
-        else:
-            return jsonify({'message': 'Processo não encontrado'}), 404
+    def stop(self, process_id):
+        try:
+            if request.method == 'OPTIONS':
+                return jsonify({}), 200, {
+                    'Access-Control-Allow-Origin': '*',
+                    'Access-Control-Allow-Methods': 'POST, OPTIONS',
+                    'Access-Control-Allow-Headers': 'Content-Type, Authorization'
+                }
+            self.process_manager.stop_process(process_id)
+            return jsonify({"message": f"Processo {process_id} parado"})
+        except RuntimeError:
+            return jsonify({"error": "Processo não encontrado"}), 404
 
 
-app= App()
-
-
-@ app.route('/start', methods=['POST'])
-def start():
-    return app.start()
-
-
-@ app.route('/stop/<int:id>', methods=['POST'])
-def stop(id):
-    return app.stop(id)
-
-
-@ app.route('/stats/<int:id>', methods=['GET'])
-def stats(id):
-    return app.stats(id)
-
+app = App().app
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run()
